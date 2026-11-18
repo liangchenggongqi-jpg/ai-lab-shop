@@ -1,0 +1,26 @@
+name: Sync public note articles
+on:
+  schedule:
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch RSS and merge article archive
+        run: python scripts/sync_note.py
+      - name: Commit updated archive if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add note-articles.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Sync note article archive"
+            git push
+          fi
